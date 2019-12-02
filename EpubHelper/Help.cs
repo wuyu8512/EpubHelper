@@ -171,9 +171,7 @@ namespace EpubHelper
 
 		public static void test()
 		{
-			var cssinfos = GetCssInfo(@"D:\Epub工具\test\style");
-			var htmlParser = new HtmlParser();
-			FillingCssInfo(htmlParser, cssinfos, File.ReadAllText(@"D:\Epub工具\test\test.html"));
+			
 		}
 	}
 }
