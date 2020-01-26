@@ -180,8 +180,9 @@ namespace EpubHelper
 					after = File.ReadAllText($"epub_config\\{config}_after.txt").Replace("\r\n", "\n");
 				}
 
+				string ncx = null;
+				if (File.Exists(filesPath + "OEBPS\\toc.ncx")) ncx = File.ReadAllText(filesPath + "OEBPS\\toc.ncx");
 				var opf = File.ReadAllText(filesPath + "OEBPS\\content.opf");
-				var ncx = File.ReadAllText(filesPath + "OEBPS\\toc.ncx");
 				if (comboBox1.SelectedIndex == 0)
 				{
 					textBox2.AddText("开始" + convert + "...");
@@ -214,7 +215,7 @@ namespace EpubHelper
 						File.WriteAllText(item, text);
 					}
 					opf = openCC.Convert(opf);
-					ncx = openCC.Convert(ncx);
+					if (ncx != null) ncx = openCC.Convert(ncx);
 					epubName = openCC.Convert(epubName);
 				}
 				else
@@ -234,11 +235,11 @@ namespace EpubHelper
 					}
 					epubName = ((ConvertResult)fanhuaji.Convert(epubName).data).text;
 					opf = ((ConvertResult)fanhuaji.Convert(opf).data).text;
-					ncx = ((ConvertResult)fanhuaji.Convert(ncx).data).text;
+					if (ncx != null) ncx = ((ConvertResult)fanhuaji.Convert(ncx).data).text;
 					convert = comboBox1.Text;
 				}
 				File.WriteAllText(filesPath + "OEBPS\\content.opf", opf);
-				File.WriteAllText(filesPath + "OEBPS\\toc.ncx", ncx);
+				if (ncx != null) File.WriteAllText(filesPath + "OEBPS\\toc.ncx", ncx);
 				epubName = epubName + "_" + convert;
 				textBox2.AddText(convert + "结束");
 			}
