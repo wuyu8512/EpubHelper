@@ -33,7 +33,7 @@ namespace EpubHelper
 			WritePrivateProfileString(Section, Key, Value.ToString(), filepath);
 		}
 
-		public static void UnZip(string zipPath,string outPath)
+		public static void UnZip(string zipPath, string outPath)
 		{
 			ZipFile.ExtractToDirectory(zipPath, outPath);
 		}
@@ -109,7 +109,7 @@ namespace EpubHelper
 			return cssinfos;
 		}
 
-		public static void FillingCssInfo(HtmlParser htmlParser ,List<cssinfo> cssinfos, string html)
+		public static void FillingCssInfo(HtmlParser htmlParser, List<cssinfo> cssinfos, string html)
 		{
 			var htmlDocument = htmlParser.ParseDocument(html);
 			var links = htmlDocument.QuerySelectorAll("link");
@@ -122,40 +122,32 @@ namespace EpubHelper
 					var fontinfos = cssinfo.fontinfos;
 					for (int j = 0; j < fontinfos.Count; j++)
 					{
-						fontinfo fontinfo = (fontinfo)fontinfos[j];
+						fontinfo fontinfo = fontinfos[j];
 						var selectors = fontinfo.selectors;
 						for (int i = 0; i < selectors.Count; i++)
 						{
 							var selector = selectors[i];
-							var elements = htmlDocument.QuerySelectorAll(selector);
+							var tempElement = htmlDocument.Body.Clone() as AngleSharp.Dom.IElement;
+							var elements = tempElement.QuerySelectorAll(selector);
 							foreach (var element in elements)
 							{
-								var text = element.TextContent.ToCharArray().ToList();
-								text = text.Distinct().ToList();
 								for (int k = 0; k < fontinfos.Count; k++)
 								{
 									if (k != j)
 									{
 										var otherfontinfo = fontinfos[k];
 										foreach (var otherselectors in otherfontinfo.selectors)
-										{			
-											if (element.Owner.QuerySelector(otherselectors) == element )
+										{
+											if (element.Owner.QuerySelector(otherselectors) == element)
 											{
 												if (element.LocalName.Equals(selector)) goto break_0;
 											}
 											var others = element.QuerySelectorAll(otherselectors);
-											foreach (var other in others)
-											{												
-												var temptext = other.TextContent.ToCharArray().Distinct();
-												foreach (var tempchar in temptext)
-												{
-													text.Remove(tempchar);
-												}
-											}
+											foreach (var other in others) other.Remove();	
 										}
 									}
 								}
-								fontinfo.text += string.Join(string.Empty, text);
+								fontinfo.text += element.TextContent;
 								break_0: { }
 							}
 						}
@@ -171,7 +163,7 @@ namespace EpubHelper
 
 		public static void test()
 		{
-			
+
 		}
 	}
 }
