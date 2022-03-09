@@ -1,38 +1,17 @@
-﻿using AngleSharp.Html.Parser;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
-using System.Web.Script.Serialization;
 using System.Windows.Forms;
-using Tool.ChineseConvert;
-using Tool.Windows;
 using System.Linq;
+using System.IO.Compression;
 
 namespace EpubHelper
 {
 	public partial class Form1 : Form
 	{
-		// P/Invoke constants
-		private const int WM_SYSCOMMAND = 0x112;
-		private const int MF_STRING = 0x0;
-		private const int MF_SEPARATOR = 0x800;
-
-		// P/Invoke declarations
-		[DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-		private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
-
-		[DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-		private static extern bool AppendMenu(IntPtr hMenu, int uFlags, int uIDNewItem, string lpNewItem);
-
-		[DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-		private static extern bool InsertMenu(IntPtr hMenu, int uPosition, int uFlags, int uIDNewItem, string lpNewItem);
-
-		// ID for the About item on the system menu
-		private int SYSMENU_ABOUT_ID = 0x1;
-
 		private Dictionary<string, string> fanhuajiConverts = new Dictionary<string, string>();
 
 		public Form1()
@@ -60,8 +39,8 @@ namespace EpubHelper
 
 		private void textBox1_DragEnter(object sender, DragEventArgs e)
 		{
-			//如果拖进来的是文件类型
-			if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            //如果拖进来的是文件类型
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
 			{
 				string[] paths = e.Data.GetData(DataFormats.FileDrop) as string[];
 				//得到拖进来的路径,取第一个文件
@@ -90,42 +69,17 @@ namespace EpubHelper
 			}
 		}
 
-		protected override void OnHandleCreated(EventArgs e)
-		{
-			base.OnHandleCreated(e);
-
-			// Get a handle to a copy of this form's system (window) menu
-			IntPtr hSysMenu = GetSystemMenu(this.Handle, false);
-
-			// Add a separator
-			AppendMenu(hSysMenu, MF_SEPARATOR, 0, string.Empty);
-
-			// Add the About menu item
-			AppendMenu(hSysMenu, MF_STRING, SYSMENU_ABOUT_ID, "关于 EpubHelper(&A)...");
-		}
-
-		protected override void WndProc(ref Message m)
-		{
-			base.WndProc(ref m);
-
-			// Test if the About item was selected from the system menu
-			if ((m.Msg == WM_SYSCOMMAND) && ((int)m.WParam == SYSMENU_ABOUT_ID))
-			{
-				MessageBoxEx.Show(this, "EpubHelper，版本 1.5\r\n版权所有（无语）2019", "关于 EpubHelper",MessageBoxButtons.OK, MessageBoxIcon.Information);
-			}
-		}
-
 		private void button1_Click(object sender, EventArgs e)
 		{
 			if (!File.Exists(textBox1.Text) || Path.GetExtension(textBox1.Text) != ".epub")
 			{
-				MessageBoxEx.Show(this, "请先选择文件", "信息");
+				MessageBox.Show(this, "请先选择文件", "信息");
 				return;
 			}
 
 			if (!radioButton1.Checked && !radioButton2.Checked && comboBox1.SelectedIndex <= 0 && !checkBox1.Checked)
 			{
-				MessageBoxEx.Show(this, "请正确选择选项", "信息");
+				MessageBox.Show(this, "请正确选择选项", "信息");
 				return;
 			}
 
@@ -144,51 +98,57 @@ namespace EpubHelper
 			Directory.CreateDirectory(filesPath);
 			textBox2.Text = string.Empty;
 			textBox2.AddText("准备解包Epub...");
-			Help.UnZip(textBox1.Text, filesPath);
+
+			ZipFile.ExtractToDirectory(textBox1.Text, filesPath);
 
 			if (radioButton1.Checked || radioButton2.Checked || comboBox1.SelectedIndex > 0)
 			{
 				textBox2.AddText("读取转换配置...");
-				string convert = string.Empty, config = string.Empty;
-				string protect = string.Empty, before = string.Empty, after = string.Empty;
+				ConvertType? convertType = null;
+				string convertTypeStr = string.Empty;
+				ConvertOptions convertOptions = new()
+				{
+					Protect = "protect.txt",
+					S2TAfter = "s2t_after.txt",
+					S2TBefore = "s2t_after_before.txt",
+					T2SAfter = "t2s_after.txt",
+					T2SBefore = "t2s_before.txt"
+				};
+				Dictionary<string, string> protect, before, after;
 
 				if (radioButton1.Checked)
 				{
-					config = "Traditional";
-					convert = "繁化";
+					convertType = ConvertType.S2t;
+					convertTypeStr = "繁化";
 				}
 				else if (radioButton2.Checked)
 				{
-					config = "Simplified";
-					convert = "简化";
-				}
-				else if (comboBox1.Text == "簡體化" || comboBox1.Text == "中國化" || comboBox1.Text == "維基簡體化")
-				{
-					config = "Simplified";
-					convert = "简化";
-				}
-				else if (comboBox1.Text == "繁體化" || comboBox1.Text == "香港化" || comboBox1.Text == "台灣化" || comboBox1.Text == "維基繁體化")
-				{
-					config = "Traditional";
-					convert = "繁化";
+					convertType = ConvertType.T2S;
+					convertTypeStr = "简化";
 				}
 
-				if (!string.IsNullOrWhiteSpace(config))
+				if (convertType == null) return;
+
+				protect = File.ReadAllLines(convertOptions.Protect).Select(x => x.Split(' ')).ToDictionary(x => x[0], x => x[1]);
+				if (convertType == ConvertType.T2S)
 				{
-					protect = File.ReadAllText("epub_config\\Protect.txt").Replace("\r\n", "\n");
-					before = File.ReadAllText($"epub_config\\{config}_before.txt").Replace("\r\n", "\n");
-					after = File.ReadAllText($"epub_config\\{config}_after.txt").Replace("\r\n", "\n");
+					before = File.ReadAllLines(convertOptions.T2SBefore).Select(x => x.Split(' ')).ToDictionary(x => x[0], x => x[1]);
+					after = File.ReadAllLines(convertOptions.T2SAfter).Select(x => x.Split(' ')).ToDictionary(x => x[0], x => x[1]);
+                }
+                else
+                {
+					before = File.ReadAllLines(convertOptions.S2TBefore).Select(x => x.Split(' ')).ToDictionary(x => x[0], x => x[1]);
+					after = File.ReadAllLines(convertOptions.S2TAfter).Select(x => x.Split(' ')).ToDictionary(x => x[0], x => x[1]);
 				}
 
-				string ncx = null;
-				if (File.Exists(filesPath + "OEBPS\\toc.ncx")) ncx = File.ReadAllText(filesPath + "OEBPS\\toc.ncx");
-				var opf = File.ReadAllText(filesPath + "OEBPS\\content.opf");
+				//string ncx = null;
+				//if (File.Exists(filesPath + "OEBPS\\toc.ncx")) ncx = File.ReadAllText(filesPath + "OEBPS\\toc.ncx");
+				//var opf = File.ReadAllText(filesPath + "OEBPS\\content.opf");
 				if (comboBox1.SelectedIndex == 0)
 				{
-					textBox2.AddText("开始" + convert + "...");
+					textBox2.AddText("开始" + convertTypeStr + "...");
 					//使用OpenCC
-					string conf = Help.IniReadValue("epub_config\\epub_config.ini", "config", config);
-					OpenCC openCC = new OpenCC(Application.StartupPath + "\\" + conf);
+
 					string[] protectL = string.IsNullOrWhiteSpace(protect) ? new string[0] : protect.Split('\n');
 					List<string[]> protectList = new List<string[]>(protectL.Select((p) => { return new string[] { openCC.Convert(p), p }; }));
 					List<string[]> beforeList = new List<string[]>();
@@ -222,95 +182,15 @@ namespace EpubHelper
 				{
 					textBox2.AddText("开始" + comboBox1.Text + "...");
 					//使用繁化姬
-					var fanhuaji = new Fanhuaji();
-					fanhuaji.DefaultConf.converter = fanhuajiConverts[comboBox1.Text];
-					fanhuaji.DefaultConf.userProtectReplace = protect;
-					fanhuaji.DefaultConf.userPreReplace = before;
-					fanhuaji.DefaultConf.userPostReplace = after;
-					foreach (var item in Directory.GetFiles(filesPath + "OEBPS\\Text"))
-					{
-						var text = File.ReadAllText(item);
-						var result = fanhuaji.Convert(text).data as ConvertResult;
-						File.WriteAllText(item, result.text);
-					}
-					epubName = ((ConvertResult)fanhuaji.Convert(epubName).data).text;
-					opf = ((ConvertResult)fanhuaji.Convert(opf).data).text;
-					if (ncx != null) ncx = ((ConvertResult)fanhuaji.Convert(ncx).data).text;
-					convert = comboBox1.Text;
 				}
-				File.WriteAllText(filesPath + "OEBPS\\content.opf", opf);
-				if (ncx != null) File.WriteAllText(filesPath + "OEBPS\\toc.ncx", ncx);
+				//File.WriteAllText(filesPath + "OEBPS\\content.opf", opf);
+				//if (ncx != null) File.WriteAllText(filesPath + "OEBPS\\toc.ncx", ncx);
 				epubName = epubName + "_" + convert;
 				textBox2.AddText(convert + "结束");
 			}
 
-			if (checkBox1.Checked)
-			{
-				textBox2.AddText("正在获取Css内的字体信息...");
-				var cssinfos = Help.GetCssInfo(filesPath + "OEBPS\\Styles");
-				textBox2.AddText("正在解析HTML文件并寻找需要子集化的字体...");
-				HtmlParser htmlParser = new HtmlParser();
-				foreach (var file in Directory.GetFiles(filesPath+ "OEBPS\\Text"))
-				{
-					Help.FillingCssInfo(htmlParser , cssinfos, File.ReadAllText(file));
-				}
-				textBox2.AddText("正在子集化字体...");
-				Dictionary<string, string> fontdic = new Dictionary<string, string>();
-				foreach (var css in cssinfos)
-				{
-					foreach (var item in css.fontinfos)
-					{
-						if(fontdic.ContainsKey(item.fontname))
-						{
-							fontdic[item.fontname] += item.text;
-						}
-						else
-						{
-							fontdic[item.fontname] = item.text;
-						}						
-					}
-				}
-				if (File.Exists("pyftsubset.exe"))
-				{
-					var fontpath = filesPath + @"OEBPS\Fonts\";
-					var ty = File.ReadAllText(@"epub_config\font_subset.txt");
-					foreach (var ft in fontdic)
-					{
-						if (File.Exists(filesPath + @"OEBPS\Fonts\" + ft.Key))
-						{
-							File.WriteAllText("temp.txt", ft.Value + ty);
-							ProcessStartInfo info = new ProcessStartInfo
-							{
-								FileName = "pyftsubset.exe",
-								WindowStyle = ProcessWindowStyle.Hidden,
-								Arguments = string.Format("\"{0}\" \"--text-file={1}\" \"--output-file={2}\"", fontpath + ft.Key, "temp.txt", fontpath + "sub_temp.ttf")
-							};
-							Process proc = Process.Start(info);
-							proc.WaitForExit();
-							if (File.Exists(fontpath + "sub_temp.ttf"))
-							{
-								File.Delete(fontpath + ft.Key);
-								FileInfo fi = new FileInfo(fontpath + @"sub_temp.ttf");
-								fi.MoveTo(fontpath + ft.Key);
-							}
-							else
-							{
-								textBox2.AddText("子集化出现错误，请尝试将软件放到其他目录运行");
-							}
-						}
-					}
-					textBox2.AddText("子集化完毕");
-					File.Delete("temp.txt");
-				}
-				else
-				{
-					textBox2.AddText("子集化失败，缺少pyftsubset.exe，请检查。");
-				}
-				epubName += "_子";
-			}
-
 			textBox2.AddText("重新打包...");
-			Help.Zip(Path.GetDirectoryName(textBox1.Text) + "\\" + epubName + ".epub", filesPath);
+			ZipFile.CreateFromDirectory(Path.GetDirectoryName(textBox1.Text) + "\\" + epubName + ".epub", filesPath, CompressionLevel.Optimal, false);
 			Directory.Delete(filesPath, true);
 			textBox2.AddText("运行完毕");
 			button1.Enabled = true;
@@ -327,16 +207,6 @@ namespace EpubHelper
 
 		private void Form1_Load(object sender, EventArgs e)
 		{
-			JavaScriptSerializer serializer = new JavaScriptSerializer();
-			var re = serializer.Deserialize<ConvertReturn>(File.ReadAllText("epub_config\\fanhuaji_service.json"));
-			var service = serializer.ConvertToType<ConvertService>(re.data);
-			comboBox1.Items.Add("禁用");
-			foreach (var item in service.converters)
-			{
-				fanhuajiConverts[item.Value.name] = item.Key;
-				comboBox1.Items.Add(item.Value.name);
-			}
-			//Help.test();
 		}
 
 		private void radioButton1_CheckedChanged(object sender, EventArgs e)
@@ -354,18 +224,5 @@ namespace EpubHelper
 				radioButton3.Checked = true;
 			}
 		}		
-	}
-
-	internal class cssinfo
-	{
-		public string filename;
-		public List<fontinfo> fontinfos = new List<fontinfo>();
-	}
-
-	internal class fontinfo
-	{
-		public string fontname;
-		public List<string> selectors = new List<string>();
-		public string text = string.Empty;
 	}
 }

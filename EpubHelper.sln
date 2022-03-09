@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29519.87
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EpubHelper", "EpubHelper\EpubHelper.csproj", "{C7A0D37F-2C60-43ED-A44A-38321D5543AA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EpubHelper", "EpubHelper\EpubHelper.csproj", "{F99CED87-F640-4504-B4E9-C0C722876AB8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EpubConvert", "EpubConvert\EpubConvert.csproj", "{250BCDC1-FD2C-4D73-B922-81864F913573}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,10 +13,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C7A0D37F-2C60-43ED-A44A-38321D5543AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C7A0D37F-2C60-43ED-A44A-38321D5543AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C7A0D37F-2C60-43ED-A44A-38321D5543AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C7A0D37F-2C60-43ED-A44A-38321D5543AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F99CED87-F640-4504-B4E9-C0C722876AB8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F99CED87-F640-4504-B4E9-C0C722876AB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F99CED87-F640-4504-B4E9-C0C722876AB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F99CED87-F640-4504-B4E9-C0C722876AB8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{250BCDC1-FD2C-4D73-B922-81864F913573}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{250BCDC1-FD2C-4D73-B922-81864F913573}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{250BCDC1-FD2C-4D73-B922-81864F913573}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{250BCDC1-FD2C-4D73-B922-81864F913573}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
