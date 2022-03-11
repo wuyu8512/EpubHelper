@@ -8,7 +8,7 @@ namespace EpubConvert
 {
     public abstract class Converter : IConverter
     {
-        public Dictionary<string, string>? Protect { get; set; }
+        public string[]? ConvertProtect { get; set; }
         public Dictionary<string, string>? ConvertAfter { get; set; }
         public Dictionary<string, string>? ConvertBefore { get; set; }
 

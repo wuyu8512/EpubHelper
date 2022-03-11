@@ -1,0 +1,11 @@
+{
+	"Protect": "epub_config/protect.txt",
+	"S2TAfter": "epub_config/s2t_after.txt",
+	"S2TBefore": "epub_config/s2t_after_before.txt",
+	"T2SAfter": "epub_config/t2s_after.txt",
+	"T2SBefore": "epub_config/t2s_before.txt",
+	"OpenCCOptions": {
+		"S2T": "epub_config/OpenCC/s2tw.json",
+		"T2S": "epub_config/OpenCC/tw2sp.json"
+	}
+}

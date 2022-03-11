@@ -23,7 +23,11 @@ namespace EpubConvert
             text = openCC.Convert(text);
 
             if (ConvertAfter != null) text = ReplaceVocabulary(text, ConvertAfter);
-            if (Protect != null) text = ReplaceVocabulary(text, Protect);
+            if (ConvertProtect != null)
+            {
+                var protect = ConvertProtect.ToDictionary(x => openCC.Convert(x), x => x);
+                text = ReplaceVocabulary(text, protect);
+            }
 
             return text;
         }
